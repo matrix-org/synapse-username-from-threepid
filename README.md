@@ -8,7 +8,7 @@ and phone numbers) when registering users.
 
 From the virtual environment that you use for Synapse, install this module with:
 ```shell
-pip install path/to/synapse-username-from-threepid
+pip install synapse-username-from-threepid
 ```
 (If you run into issues, you may need to upgrade `pip` first, e.g. by running
 `pip install --upgrade pip`)
@@ -18,7 +18,15 @@ Then alter your homeserver configuration, adding to your `modules` configuration
 modules:
   - module: username_from_threepid.UsernameFromThreepid
     config:
-      # TODO: Complete this section with an example for your module
+      # Which third-party identifier to look for. Can either be "email" (for email
+      # addresses), or "msisdn" (for phone numbers).
+      # Required.
+      threepid_to_use: "email"
+
+      # Whether to fail the registration if no third-party identifier was provided during
+      # the registration process.
+      # Optional, defaults to false.
+      fail_if_not_found: true
 ```
 
 
@@ -77,9 +85,6 @@ Synapse developers (assuming a Unix-like shell):
     ```
 
  7. If applicable:
-    Create a *release*, based on the tag you just pushed, on GitHub or GitLab.
-
- 8. If applicable:
     Create a source distribution and upload it to PyPI:
     ```shell
     python -m build

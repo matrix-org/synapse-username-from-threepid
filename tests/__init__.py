@@ -1,40 +1,25 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-import attr
 from mock import Mock
+from synapse.api.errors import SynapseError
 from synapse.module_api import ModuleApi
 
 from username_from_threepid import UsernameFromThreepid
 
 
-@attr.s(auto_attribs=True)
-class MockEvent:
-    """Mocks an event. Only exposes properties the module uses."""
-    sender: str
-    type: str
-    content: Dict[str, Any]
-    room_id: str = "!someroom"
-    state_key: Optional[str] = None
-
-    def is_state(self) -> bool:
-        """Checks if the event is a state event by checking if it has a state key."""
-        return self.state_key is not None
-
-    @property
-    def membership(self) -> str:
-        """Extracts the membership from the event. Should only be called on an event
-        that's a membership event, and will raise a KeyError otherwise.
-        """
-        membership: str = self.content["membership"]
-        return membership
-
-
-def create_module() -> UsernameFromThreepid:
+def create_module(
+    config: Dict[str, Any],
+    fail_first_attempt: bool = False,
+) -> UsernameFromThreepid:
     # Create a mock based on the ModuleApi spec, but override some mocked functions
     # because some capabilities are needed for running the tests.
+    async def check_username(username: str) -> None:
+        if fail_first_attempt and not username.endswith("1"):
+            raise SynapseError(code=400, msg="Username in use", errcode="M_USER_IN_USE")
+
     module_api = Mock(spec=ModuleApi)
+    module_api.check_username = Mock(side_effect=check_username)
 
-    # If necessary, give parse_config some configuration to parse.
-    config = UsernameFromThreepid.parse_config({})
+    parsed_config = UsernameFromThreepid.parse_config(config)
 
-    return UsernameFromThreepid(config, module_api)
+    return UsernameFromThreepid(parsed_config, module_api)
