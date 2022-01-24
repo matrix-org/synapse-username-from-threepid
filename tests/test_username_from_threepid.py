@@ -15,8 +15,8 @@ from typing import Optional
 
 import aiounittest
 
-from username_from_threepid import LoginType, UsernameFromThreepid
 from tests import create_module
+from username_from_threepid import LoginType, UsernameFromThreepid
 
 
 class UsernameFromThreepidTestCase(aiounittest.AsyncTestCase):
