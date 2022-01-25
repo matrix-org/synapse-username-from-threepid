@@ -58,7 +58,7 @@ class UsernameFromThreepidTestCase(aiounittest.AsyncTestCase):
         """
         input = "foo@bar.baz"
         expected_output = "foo-bar.baz1"
-        module = create_module({"threepid_to_use": "email"}, fail_first_attempt=True)
+        module = create_module({"threepid_to_use": "email"}, succeed_attempt=2)
         await self._test_email(module, input, expected_output)
 
     async def _test_email(
@@ -104,3 +104,19 @@ class UsernameFromThreepidTestCase(aiounittest.AsyncTestCase):
         }
         res = await module.set_username_from_threepid(uia_results, {})
         self.assertEqual(res, msisdn_number)
+
+    async def test_msisdn_conflict(self) -> None:
+        """Tests that, when registering with an email address, a digit is appended if the
+        resulting username clashes with an existing user.
+        """
+        msisdn_number = "440000000000"
+        module = create_module({"threepid_to_use": "msisdn"}, succeed_attempt=2)
+        uia_results = {
+            LoginType.MSISDN: {
+                "address": msisdn_number,
+                "medium": "msisdn",
+                "verified_at": 0,
+            }
+        }
+        res = await module.set_username_from_threepid(uia_results, {})
+        self.assertEqual(res, msisdn_number + "-1")
