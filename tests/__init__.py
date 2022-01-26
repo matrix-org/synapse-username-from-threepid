@@ -1,40 +1,26 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-import attr
 from mock import Mock
+from synapse.api.errors import SynapseError
 from synapse.module_api import ModuleApi
 
 from username_from_threepid import UsernameFromThreepid
 
 
-@attr.s(auto_attribs=True)
-class MockEvent:
-    """Mocks an event. Only exposes properties the module uses."""
-    sender: str
-    type: str
-    content: Dict[str, Any]
-    room_id: str = "!someroom"
-    state_key: Optional[str] = None
-
-    def is_state(self) -> bool:
-        """Checks if the event is a state event by checking if it has a state key."""
-        return self.state_key is not None
-
-    @property
-    def membership(self) -> str:
-        """Extracts the membership from the event. Should only be called on an event
-        that's a membership event, and will raise a KeyError otherwise.
-        """
-        membership: str = self.content["membership"]
-        return membership
-
-
-def create_module() -> UsernameFromThreepid:
-    # Create a mock based on the ModuleApi spec, but override some mocked functions
-    # because some capabilities are needed for running the tests.
+def create_module(
+    config: Dict[str, Any],
+    succeed_attempt: int = 1,
+) -> UsernameFromThreepid:
     module_api = Mock(spec=ModuleApi)
 
-    # If necessary, give parse_config some configuration to parse.
-    config = UsernameFromThreepid.parse_config({})
+    # Create a mock based on the ModuleApi spec, but override some mocked functions
+    # because some capabilities are needed for running the tests.
+    async def check_username(username: str) -> None:
+        if succeed_attempt != module_api.check_username.call_count:
+            raise SynapseError(code=400, msg="Username in use", errcode="M_USER_IN_USE")
 
-    return UsernameFromThreepid(config, module_api)
+    module_api.check_username = Mock(side_effect=check_username)
+
+    parsed_config = UsernameFromThreepid.parse_config(config)
+
+    return UsernameFromThreepid(parsed_config, module_api)
