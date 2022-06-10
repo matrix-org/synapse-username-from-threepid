@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from mock import Mock
+from unittest.mock import Mock
 from synapse.api.errors import SynapseError
 from synapse.module_api import ModuleApi
 
