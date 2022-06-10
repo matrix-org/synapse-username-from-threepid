@@ -13,11 +13,12 @@
 # limitations under the License.
 import re
 import string
-from typing import Any, Dict, Final, Optional
+from typing import Any, Dict, Optional
 
 import attr
 from synapse.module_api import ModuleApi
 from synapse.module_api.errors import ConfigError, SynapseError
+from typing_extensions import Final
 
 mxid_localpart_allowed_characters = frozenset(
     "_-./=" + string.ascii_lowercase + string.digits
